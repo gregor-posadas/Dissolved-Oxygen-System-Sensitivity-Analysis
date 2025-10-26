@@ -252,10 +252,202 @@ def generate_pdf_report(facility_data, systems_data, comparison_df):
         report.write(f"  DO Capability: {perf['do_capability']:.1f} mg/L\n\n")
     
     report.write("=" * 80 + "\n")
-    report.write("For detailed analysis, visit: https://biosolutions.com\n")
+    report.write("For detailed analysis, visit: https://www.biosolutions-usa.com\n")
     report.write("=" * 80 + "\n")
     
     return report.getvalue()
+
+def generate_professional_pdf(facility_data, systems_data, comparison_df):
+    """Generate a professional PDF report with formatting"""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    from io import BytesIO
+    
+    # Create PDF buffer
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                           rightMargin=72, leftMargin=72,
+                           topMargin=72, bottomMargin=18)
+    
+    # Container for the 'Flowable' objects
+    elements = []
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#667eea'),
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=16,
+        textColor=colors.HexColor('#2c3e50'),
+        spaceAfter=12,
+        spaceBefore=12,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = styles['Normal']
+    
+    # Title
+    title = Paragraph("Wastewater Aeration System<br/>Comparison Report", title_style)
+    elements.append(title)
+    elements.append(Spacer(1, 0.2*inch))
+    
+    # Date
+    date_text = Paragraph(f"<b>Generated:</b> {datetime.now().strftime('%B %d, %Y')}", normal_style)
+    elements.append(date_text)
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Facility Information Section
+    facility_heading = Paragraph("Facility Information", heading_style)
+    elements.append(facility_heading)
+    
+    facility_data_table = [
+        ['Parameter', 'Value'],
+        ['Flow Rate', f"{facility_data['basic_info']['flow_rate_mgd']:.2f} MGD"],
+        ['Population Served', f"{facility_data['basic_info']['population_served']:,} people"],
+        ['Influent BOD₅', f"{facility_data['influent_characteristics']['bod5_mg_l']:.1f} mg/L"],
+        ['Influent Total Nitrogen', f"{facility_data['influent_characteristics']['tn_mg_l']:.1f} mg/L"],
+        ['Influent Total Phosphorus', f"{facility_data['influent_characteristics']['tp_mg_l']:.1f} mg/L"],
+        ['Temperature', f"{facility_data['influent_characteristics']['temperature_celsius']}°C"],
+        ['Energy Cost', f"${facility_data['current_aeration']['energy_cost_per_kwh']:.5f}/kWh"],
+        ['TN Limit', f"{facility_data['effluent_requirements']['tn_limit_mg_l']:.1f} mg/L"],
+        ['TP Limit', f"{facility_data['effluent_requirements']['tp_limit_mg_l']:.1f} mg/L"],
+    ]
+    
+    facility_table = Table(facility_data_table, colWidths=[3*inch, 3*inch])
+    facility_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#667eea')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+    ]))
+    
+    elements.append(facility_table)
+    elements.append(Spacer(1, 0.4*inch))
+    
+    # System Comparison Section
+    comparison_heading = Paragraph("System Comparison Results", heading_style)
+    elements.append(comparison_heading)
+    
+    # Build comparison table
+    comparison_data = [['System', 'Monthly Cost', 'Monthly Energy', 'TN Effluent', 'TP Effluent', 'Capital Cost']]
+    
+    for system_name, perf, _ in systems_data:
+        comparison_data.append([
+            system_name,
+            f"${perf['monthly_cost_usd']:,.2f}",
+            f"{perf['monthly_energy_kwh']:,.0f} kWh",
+            f"{perf['projected_tn_effluent']:.1f} mg/L",
+            f"{perf['projected_tp_effluent']:.1f} mg/L",
+            f"${perf['capital_cost']:,.0f}"
+        ])
+    
+    comparison_table = Table(comparison_data, colWidths=[1.5*inch, 1.2*inch, 1.2*inch, 1.1*inch, 1.1*inch, 1.2*inch])
+    comparison_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#667eea')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+    ]))
+    
+    elements.append(comparison_table)
+    elements.append(Spacer(1, 0.4*inch))
+    
+    # Key Findings
+    findings_heading = Paragraph("Key Findings", heading_style)
+    elements.append(findings_heading)
+    
+    # Find best in each category
+    costs = [(name, perf['monthly_cost_usd']) for name, perf, _ in systems_data]
+    energy = [(name, perf['monthly_energy_kwh']) for name, perf, _ in systems_data]
+    tn = [(name, perf['projected_tn_effluent']) for name, perf, _ in systems_data]
+    
+    lowest_cost = min(costs, key=lambda x: x[1])
+    lowest_energy = min(energy, key=lambda x: x[1])
+    best_tn = min(tn, key=lambda x: x[1])
+    
+    findings = [
+        f"• <b>Lowest Operating Cost:</b> {lowest_cost[0]} at ${lowest_cost[1]:,.2f}/month",
+        f"• <b>Most Energy Efficient:</b> {lowest_energy[0]} at {lowest_energy[1]:,.0f} kWh/month",
+        f"• <b>Best Nitrogen Removal:</b> {best_tn[0]} achieving {best_tn[1]:.1f} mg/L TN",
+    ]
+    
+    for finding in findings:
+        elements.append(Paragraph(finding, normal_style))
+        elements.append(Spacer(1, 0.1*inch))
+    
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Compliance Status
+    compliance_heading = Paragraph("Regulatory Compliance", heading_style)
+    elements.append(compliance_heading)
+    
+    tn_limit = facility_data['effluent_requirements']['tn_limit_mg_l']
+    tp_limit = facility_data['effluent_requirements']['tp_limit_mg_l']
+    
+    for system_name, perf, _ in systems_data:
+        tn_compliant = perf['projected_tn_effluent'] <= tn_limit
+        tp_compliant = perf['projected_tp_effluent'] <= tp_limit
+        
+        if tn_compliant and tp_compliant:
+            status = f"<font color='green'>✓ {system_name} meets all effluent limits</font>"
+        else:
+            status = f"<font color='red'>✗ {system_name} exceeds effluent limits</font>"
+        
+        elements.append(Paragraph(status, normal_style))
+        elements.append(Spacer(1, 0.1*inch))
+    
+    # Footer
+    elements.append(Spacer(1, 0.5*inch))
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.grey,
+        alignment=TA_CENTER
+    )
+    footer = Paragraph(
+        "Developed by BioSolutions | www.biosolutions-usa.com<br/>"
+        "This report is based on the Greenleaf WWTP case study and facility-specific inputs.",
+        footer_style
+    )
+    elements.append(footer)
+    
+    # Build PDF
+    doc.build(elements)
+    
+    # Get PDF data
+    pdf_data = buffer.getvalue()
+    buffer.close()
+    
+    return pdf_data
 
 def main():
     st.set_page_config(
@@ -929,16 +1121,29 @@ def main():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        # Generate comprehensive text report
-        report_text = generate_pdf_report(facility_data, selected_systems, comparison_df)
-        st.download_button(
-            label="📄 Download Full Report (TXT)",
-            data=report_text,
-            file_name=f"aeration_comparison_report_{datetime.now().strftime('%Y%m%d')}.txt",
-            mime="text/plain",
-            use_container_width=True,
-            help="Comprehensive text report with all analysis results"
-        )
+        # Generate professional PDF report
+        try:
+            pdf_data = generate_professional_pdf(facility_data, selected_systems, comparison_df)
+            st.download_button(
+                label="📄 Download PDF Report",
+                data=pdf_data,
+                file_name=f"aeration_comparison_{datetime.now().strftime('%Y%m%d')}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                help="Professional PDF report with tables and formatting"
+            )
+        except Exception as e:
+            st.error(f"PDF generation unavailable. Please install reportlab: {str(e)}")
+            # Fallback to text report
+            report_text = generate_pdf_report(facility_data, selected_systems, comparison_df)
+            st.download_button(
+                label="📄 Download Text Report",
+                data=report_text,
+                file_name=f"aeration_comparison_{datetime.now().strftime('%Y%m%d')}.txt",
+                mime="text/plain",
+                use_container_width=True,
+                help="Text-based report (PDF unavailable)"
+            )
     
     with col2:
         # CSV export
