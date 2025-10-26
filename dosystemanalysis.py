@@ -476,12 +476,19 @@ def main():
             color: white;
         }
         .section-container {
-            background-color: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
-            margin: 25px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 2px solid #dee2e6;
+            background-color: #ffffff !important;
+            border-radius: 15px !important;
+            padding: 30px !important;
+            margin: 25px 0 !important;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15) !important;
+            border: 3px solid #4a5568 !important;
+        }
+        div[data-testid="stVerticalBlock"] > div.section-container {
+            background-color: #ffffff !important;
+            border: 3px solid #4a5568 !important;
+            border-radius: 15px !important;
+            padding: 30px !important;
+            margin: 25px 0 !important;
         }
         .metric-card {
             background-color: #f8f9fa;
@@ -684,7 +691,9 @@ def main():
                 st.error("❌ Exceeds Limits")
     
     # Enhanced visualizations
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
+    st.markdown("""
+        <div style="border: 3px solid #2d3748; border-radius: 15px; padding: 30px; margin: 25px 0; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    """, unsafe_allow_html=True)
     st.markdown("## 📊 Performance Comparison")
     
     # Create comparison dataframe
@@ -917,7 +926,9 @@ def main():
     st.markdown('</div>', unsafe_allow_html=True)  # Close Performance Comparison container
     
     # Sensitivity Analysis
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
+    st.markdown("""
+        <div style="border: 3px solid #2d3748; border-radius: 15px; padding: 30px; margin: 25px 0; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    """, unsafe_allow_html=True)
     st.markdown("## 🔬 Sensitivity Analysis")
     st.markdown("See how system performance changes with different operating conditions")
     
@@ -1109,7 +1120,9 @@ def main():
     st.markdown('</div>', unsafe_allow_html=True)  # Close Sensitivity Analysis container
     
     # Summary table
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
+    st.markdown("""
+        <div style="border: 3px solid #2d3748; border-radius: 15px; padding: 30px; margin: 25px 0; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    """, unsafe_allow_html=True)
     st.markdown("## 📋 Summary Table")
     
     summary_display = comparison_df.copy()
@@ -1120,8 +1133,8 @@ def main():
         summary_display.style.format({
             'Monthly Cost ($)': '${:,.2f}',
             'Monthly Energy (kWh)': '{:,.0f}',
-            'TN (mg/L)': '{:.2f}',
-            'TP (mg/L)': '{:.2f}',
+            'TN (mg/L as N)': '{:.2f}',
+            'TP (mg/L as P)': '{:.2f}',
             'Capital Cost ($)': '${:,.0f}',
             'Footprint (sq ft)': '{:,.0f}'
         }),
@@ -1131,7 +1144,9 @@ def main():
     st.markdown('</div>', unsafe_allow_html=True)  # Close Summary Table container
     
     # Export section
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
+    st.markdown("""
+        <div style="border: 3px solid #2d3748; border-radius: 15px; padding: 30px; margin: 25px 0; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    """, unsafe_allow_html=True)
     st.markdown("## 📥 Export Results")
     st.markdown("Download your analysis in different formats")
     
