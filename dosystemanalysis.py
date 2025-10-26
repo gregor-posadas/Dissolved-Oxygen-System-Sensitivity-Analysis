@@ -475,6 +475,14 @@ def main():
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             color: white;
         }
+        .section-container {
+            background-color: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+        }
         .metric-card {
             background-color: #f8f9fa;
             border-radius: 12px;
@@ -560,8 +568,8 @@ def main():
         with st.expander("💧 Influent Characteristics", expanded=True):
             bod5 = st.number_input("BOD₅ (mg/L)", min_value=50.0, value=200.0, step=10.0)
             cod = st.number_input("COD (mg/L)", min_value=100.0, value=400.0, step=10.0)
-            tn = st.number_input("Total Nitrogen (mg/L)", min_value=10.0, value=40.0, step=5.0)
-            tp = st.number_input("Total Phosphorus (mg/L)", min_value=2.0, value=10.0, step=1.0)
+            tn = st.number_input("Total Nitrogen - TN (mg/L as N)", min_value=10.0, value=40.0, step=5.0)
+            tp = st.number_input("Total Phosphorus - TP (mg/L as P)", min_value=2.0, value=10.0, step=1.0)
             temp = st.slider("Temperature (°C)", min_value=5, max_value=30, value=15)
         
         with st.expander("⚡ Current System", expanded=True):
@@ -572,8 +580,8 @@ def main():
                                          step=0.001, format="%.5f")
         
         with st.expander("✅ Effluent Requirements", expanded=True):
-            tn_limit = st.number_input("TN Limit (mg/L)", min_value=5.0, value=15.0, step=1.0)
-            tp_limit = st.number_input("TP Limit (mg/L)", min_value=0.5, value=2.0, step=0.5)
+            tn_limit = st.number_input("TN Limit (mg/L as N)", min_value=5.0, value=15.0, step=1.0)
+            tp_limit = st.number_input("TP Limit (mg/L as P)", min_value=0.5, value=2.0, step=0.5)
     
     # Prepare facility data
     facility_data = {
@@ -660,10 +668,10 @@ def main():
             # Key metrics in cleaner format
             col_a, col_b = st.columns(2)
             with col_a:
-                st.metric("TN Effluent", f"{perf['projected_tn_effluent']:.1f} mg/L")
+                st.metric("TN Effluent", f"{perf['projected_tn_effluent']:.1f} mg/L as N")
                 st.metric("Capital Cost", f"${perf['capital_cost']/1000:.0f}K")
             with col_b:
-                st.metric("TP Effluent", f"{perf['projected_tp_effluent']:.1f} mg/L")
+                st.metric("TP Effluent", f"{perf['projected_tp_effluent']:.1f} mg/L as P")
                 st.metric("DO Max", f"{perf['do_capability']:.0f} mg/L")
             
             # Compliance check
@@ -684,8 +692,8 @@ def main():
             'System': name,
             'Monthly Cost': perf['monthly_cost_usd'],
             'Monthly Energy': perf['monthly_energy_kwh'],
-            'TN Effluent': perf['projected_tn_effluent'],
-            'TP Effluent': perf['projected_tp_effluent'],
+            'Total Nitrogen (TN)': perf['projected_tn_effluent'],
+            'Total Phosphorus (TP)': perf['projected_tp_effluent'],
             'Capital Cost': perf['capital_cost'],
             'Footprint': perf['footprint']
         }
@@ -1094,12 +1102,15 @@ def main():
                     hide_index=True
                 )
     
+    st.markdown('</div>', unsafe_allow_html=True)  # Close Performance Comparison container
+    
     # Summary table
+    st.markdown('<div class="section-container">', unsafe_allow_html=True)
     st.markdown("## 📋 Summary Table")
     
     summary_display = comparison_df.copy()
     summary_display.columns = ['System', 'Monthly Cost ($)', 'Monthly Energy (kWh)', 
-                               'TN (mg/L)', 'TP (mg/L)', 'Capital Cost ($)', 'Footprint (sq ft)']
+                               'TN (mg/L as N)', 'TP (mg/L as P)', 'Capital Cost ($)', 'Footprint (sq ft)']
     
     st.dataframe(
         summary_display.style.format({
@@ -1113,8 +1124,10 @@ def main():
         use_container_width=True,
         height=200
     )
+    st.markdown('</div>', unsafe_allow_html=True)  # Close Summary Table container
     
     # Export section
+    st.markdown('<div class="section-container">', unsafe_allow_html=True)
     st.markdown("## 📥 Export Results")
     st.markdown("Download your analysis in different formats")
     
@@ -1180,6 +1193,8 @@ SYSTEMS COMPARED:
             use_container_width=True,
             help="Quick summary of key metrics"
         )
+    
+    st.markdown('</div>', unsafe_allow_html=True)  # Close Export container
     
     # Footer
     st.markdown("---")
