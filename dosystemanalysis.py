@@ -802,7 +802,7 @@ def main():
             'TP (mg/L)': '{:.2f}',
             'Capital Cost ($)': '${:,.0f}',
             'Footprint (sq ft)': '{:,.0f}'
-        }).background_gradient(subset=['Monthly Cost ($)', 'Monthly Energy (kWh)'], cmap='RdYlGn_r'),
+        }),
         use_container_width=True,
         height=200
     )
