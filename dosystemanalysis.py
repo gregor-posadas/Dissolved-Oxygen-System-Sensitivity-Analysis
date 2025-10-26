@@ -1,7 +1,225 @@
 import streamlit as st
+import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+from dataclasses import dataclass
+from typing import Dict, List, Tuple
+
+@dataclass
+class AerationSystem:
+    """Base class for aeration system characteristics"""
+    name: str
+    system_type: str
+    installed_hp: float
+    oxygen_transfer_efficiency: float
+    energy_consumption_factor: float
+    capital_cost_per_mgd: float
+    maintenance_cost_annual: float
+    do_delivery_capability: float
+    footprint_sq_ft: float
+
+class BioSolutionsSystem(AerationSystem):
+    """BioSolutions high-concentration DO infusion system"""
+    def __init__(self):
+        super().__init__(
+            name="BioSolutions DO Infusion",
+            system_type="High-concentration DO infusion",
+            installed_hp=20,
+            oxygen_transfer_efficiency=2.8,
+            energy_consumption_factor=0.85,
+            capital_cost_per_mgd=250000,
+            maintenance_cost_annual=5000,
+            do_delivery_capability=40.0,
+            footprint_sq_ft=100
+        )
+    
+    def calculate_performance(self, facility_data: Dict) -> Dict:
+        """Calculate expected performance metrics"""
+        flow_mgd = facility_data['basic_info']['flow_rate_mgd']
+        
+        # Oxygen demand calculation
+        bod_removal = facility_data['influent_characteristics']['bod5_mg_l'] * 0.8
+        oxygen_demand_lb_day = flow_mgd * bod_removal * 8.34
+        
+        # Energy calculation based on Greenleaf case study
+        base_kwh_per_day = 187.6
+        scaling_factor = flow_mgd / 0.24
+        estimated_kwh_day = base_kwh_per_day * scaling_factor ** 0.85
+        
+        # Nutrient removal projection
+        tn_removal_improvement = 0.55
+        tp_removal_improvement = 0.26
+        
+        current_tn = facility_data['influent_characteristics']['tn_mg_l']
+        current_tp = facility_data['influent_characteristics']['tp_mg_l']
+        
+        projected_tn_effluent = current_tn * (1 - tn_removal_improvement)
+        projected_tp_effluent = current_tp * (1 - tp_removal_improvement)
+        
+        # Cost calculation
+        energy_cost = estimated_kwh_day * 30 * facility_data['current_aeration']['energy_cost_per_kwh']
+        
+        return {
+            'daily_energy_kwh': estimated_kwh_day,
+            'monthly_energy_kwh': estimated_kwh_day * 30,
+            'monthly_cost_usd': energy_cost + self.maintenance_cost_annual/12,
+            'daily_cost_usd': energy_cost/30,
+            'projected_tn_effluent': projected_tn_effluent,
+            'projected_tp_effluent': projected_tp_effluent,
+            'do_capability': self.do_delivery_capability,
+            'capital_cost': self.capital_cost_per_mgd * flow_mgd,
+            'footprint': self.footprint_sq_ft
+        }
+
+class TurbineAerationSystem(AerationSystem):
+    """Traditional turbine aeration system"""
+    def __init__(self):
+        super().__init__(
+            name="Turbine Aeration",
+            system_type="Mechanical surface aeration",
+            installed_hp=50,
+            oxygen_transfer_efficiency=2.0,
+            energy_consumption_factor=1.2,
+            capital_cost_per_mgd=180000,
+            maintenance_cost_annual=8000,
+            do_delivery_capability=5.0,
+            footprint_sq_ft=200
+        )
+    
+    def calculate_performance(self, facility_data: Dict) -> Dict:
+        """Calculate expected performance for turbine system"""
+        flow_mgd = facility_data['basic_info']['flow_rate_mgd']
+        
+        # Energy calculation based on Greenleaf baseline
+        base_kwh_per_day = 166.8
+        scaling_factor = flow_mgd / 0.24
+        estimated_kwh_day = base_kwh_per_day * scaling_factor ** 0.85
+        
+        # Standard nutrient removal
+        tn_removal_standard = 0.35
+        tp_removal_standard = 0.20
+        
+        current_tn = facility_data['influent_characteristics']['tn_mg_l']
+        current_tp = facility_data['influent_characteristics']['tp_mg_l']
+        
+        projected_tn_effluent = current_tn * (1 - tn_removal_standard)
+        projected_tp_effluent = current_tp * (1 - tp_removal_standard)
+        
+        energy_cost = estimated_kwh_day * 30 * facility_data['current_aeration']['energy_cost_per_kwh']
+        
+        return {
+            'daily_energy_kwh': estimated_kwh_day,
+            'monthly_energy_kwh': estimated_kwh_day * 30,
+            'monthly_cost_usd': energy_cost + self.maintenance_cost_annual/12,
+            'daily_cost_usd': energy_cost/30,
+            'projected_tn_effluent': projected_tn_effluent,
+            'projected_tp_effluent': projected_tp_effluent,
+            'do_capability': self.do_delivery_capability,
+            'capital_cost': self.capital_cost_per_mgd * flow_mgd,
+            'footprint': self.footprint_sq_ft
+        }
+
+class DiffusedAirSystem(AerationSystem):
+    """Fine bubble diffused aeration"""
+    def __init__(self):
+        super().__init__(
+            name="Fine Bubble Diffused Air",
+            system_type="Submerged diffused aeration",
+            installed_hp=40,
+            oxygen_transfer_efficiency=3.5,
+            energy_consumption_factor=0.75,
+            capital_cost_per_mgd=220000,
+            maintenance_cost_annual=12000,
+            do_delivery_capability=8.0,
+            footprint_sq_ft=150
+        )
+    
+    def calculate_performance(self, facility_data: Dict) -> Dict:
+        """Calculate expected performance for diffused air system"""
+        flow_mgd = facility_data['basic_info']['flow_rate_mgd']
+        
+        # Fine bubble is typically most energy efficient
+        base_kwh_per_day = 150
+        scaling_factor = flow_mgd / 0.24
+        estimated_kwh_day = base_kwh_per_day * scaling_factor ** 0.85
+        
+        # Moderate nutrient removal
+        tn_removal = 0.45
+        tp_removal = 0.22
+        
+        current_tn = facility_data['influent_characteristics']['tn_mg_l']
+        current_tp = facility_data['influent_characteristics']['tp_mg_l']
+        
+        projected_tn_effluent = current_tn * (1 - tn_removal)
+        projected_tp_effluent = current_tp * (1 - tp_removal)
+        
+        energy_cost = estimated_kwh_day * 30 * facility_data['current_aeration']['energy_cost_per_kwh']
+        
+        return {
+            'daily_energy_kwh': estimated_kwh_day,
+            'monthly_energy_kwh': estimated_kwh_day * 30,
+            'monthly_cost_usd': energy_cost + self.maintenance_cost_annual/12,
+            'daily_cost_usd': energy_cost/30,
+            'projected_tn_effluent': projected_tn_effluent,
+            'projected_tp_effluent': projected_tp_effluent,
+            'do_capability': self.do_delivery_capability,
+            'capital_cost': self.capital_cost_per_mgd * flow_mgd,
+            'footprint': self.footprint_sq_ft
+        }
+
+def sensitivity_analysis(facility_data: Dict, parameter: str, 
+                        variation_range: Tuple[float, float]) -> pd.DataFrame:
+    """
+    Perform sensitivity analysis by varying a parameter
+    """
+    systems = [
+        BioSolutionsSystem(),
+        TurbineAerationSystem(),
+        DiffusedAirSystem()
+    ]
+    
+    results = []
+    
+    # Parse parameter path
+    keys = parameter.split('.')
+    
+    # Get original value
+    original_value = facility_data
+    for key in keys:
+        original_value = original_value[key]
+    
+    # Create range of values
+    multipliers = np.linspace(variation_range[0], variation_range[1], 20)
+    
+    for mult in multipliers:
+        # Create modified facility data
+        modified_data = dict(facility_data)
+        
+        # Deep copy nested dictionaries
+        modified_data['basic_info'] = dict(facility_data['basic_info'])
+        modified_data['influent_characteristics'] = dict(facility_data['influent_characteristics'])
+        modified_data['current_aeration'] = dict(facility_data['current_aeration'])
+        modified_data['effluent_requirements'] = dict(facility_data['effluent_requirements'])
+        
+        # Set the varied parameter
+        current_dict = modified_data
+        for key in keys[:-1]:
+            current_dict = current_dict[key]
+        current_dict[keys[-1]] = original_value * mult
+        
+        # Calculate for each system
+        for system in systems:
+            performance = system.calculate_performance(modified_data)
+            results.append({
+                'parameter_value': original_value * mult,
+                'multiplier': mult,
+                'system': system.name,
+                **performance
+            })
+    
+    return pd.DataFrame(results)
 
 def main():
     st.set_page_config(
@@ -404,13 +622,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
-
-## 4. DEPLOYMENT INSTRUCTIONS
-
-Create a `requirements.txt` file:
-```
-streamlit==1.28.0
-pandas==2.0.3
-numpy==1.24.3
-plotly==5.17.0
