@@ -477,11 +477,11 @@ def main():
         }
         .section-container {
             background-color: #f8f9fa;
-            border-radius: 20px;
+            border-radius: 15px;
             padding: 30px;
-            margin: 30px 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border: 1px solid #e9ecef;
+            margin: 25px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 2px solid #dee2e6;
         }
         .metric-card {
             background-color: #f8f9fa;
@@ -684,6 +684,7 @@ def main():
                 st.error("❌ Exceeds Limits")
     
     # Enhanced visualizations
+    st.markdown('<div class="section-container">', unsafe_allow_html=True)
     st.markdown("## 📊 Performance Comparison")
     
     # Create comparison dataframe
@@ -913,7 +914,10 @@ def main():
         else:
             st.info("Select BioSolutions and at least one other system to see ROI analysis")
     
+    st.markdown('</div>', unsafe_allow_html=True)  # Close Performance Comparison container
+    
     # Sensitivity Analysis
+    st.markdown('<div class="section-container">', unsafe_allow_html=True)
     st.markdown("## 🔬 Sensitivity Analysis")
     st.markdown("See how system performance changes with different operating conditions")
     
@@ -1102,7 +1106,7 @@ def main():
                     hide_index=True
                 )
     
-    st.markdown('</div>', unsafe_allow_html=True)  # Close Performance Comparison container
+    st.markdown('</div>', unsafe_allow_html=True)  # Close Sensitivity Analysis container
     
     # Summary table
     st.markdown('<div class="section-container">', unsafe_allow_html=True)
