@@ -716,14 +716,47 @@ def main():
     st.markdown("## 🔬 Sensitivity Analysis")
     st.markdown("See how system performance changes with different operating conditions")
     
+    # Parameter selection with helpful descriptions
+    param_descriptions = {
+        "Flow Rate": {
+            "desc": "How does changing facility size affect performance?",
+            "affects": ["Cost", "Energy", "Nutrients"],
+            "icon": "🌊"
+        },
+        "Energy Cost": {
+            "desc": "What if electricity prices change?",
+            "affects": ["Cost only"],
+            "icon": "💰"
+        },
+        "Influent BOD": {
+            "desc": "Higher pollution = more treatment needed",
+            "affects": ["Energy", "Cost"],
+            "icon": "🧪"
+        },
+        "Influent TN": {
+            "desc": "How does nitrogen loading affect removal?",
+            "affects": ["TN Effluent"],
+            "icon": "🔬"
+        },
+        "Temperature": {
+            "desc": "Seasonal temperature effects on biology",
+            "affects": ["Nutrients", "Energy"],
+            "icon": "🌡️"
+        }
+    }
+    
     col1, col2, col3 = st.columns([2, 1, 1])
     
     with col1:
         sens_param = st.selectbox(
-            "Parameter to Analyze",
+            "What do you want to analyze?",
             ["Flow Rate", "Energy Cost", "Influent BOD", "Influent TN", "Temperature"],
             help="Select which parameter to vary"
         )
+        
+        # Show what this parameter affects
+        param_info = param_descriptions[sens_param]
+        st.info(f"{param_info['icon']} **{param_info['desc']}**\n\nAffects: {', '.join(param_info['affects'])}")
     
     with col2:
         range_min = st.slider("Min % of current", 50, 100, 70)
@@ -732,60 +765,133 @@ def main():
         range_max = st.slider("Max % of current", 100, 200, 130)
     
     param_map = {
-        "Flow Rate": "basic_info.flow_rate_mgd",
-        "Energy Cost": "current_aeration.energy_cost_per_kwh",
-        "Influent BOD": "influent_characteristics.bod5_mg_l",
-        "Influent TN": "influent_characteristics.tn_mg_l",
-        "Temperature": "influent_characteristics.temperature_celsius"
+        "Flow Rate": ("basic_info.flow_rate_mgd", ["monthly_cost_usd", "monthly_energy_kwh", "projected_tn_effluent"]),
+        "Energy Cost": ("current_aeration.energy_cost_per_kwh", ["monthly_cost_usd"]),
+        "Influent BOD": ("influent_characteristics.bod5_mg_l", ["monthly_cost_usd", "monthly_energy_kwh"]),
+        "Influent TN": ("influent_characteristics.tn_mg_l", ["projected_tn_effluent"]),
+        "Temperature": ("influent_characteristics.temperature_celsius", ["projected_tn_effluent", "projected_tp_effluent"])
     }
     
     if st.button("🚀 Run Sensitivity Analysis", use_container_width=True):
         with st.spinner("Running analysis..."):
+            param_path, relevant_metrics = param_map[sens_param]
             sens_results = sensitivity_analysis(
                 facility_data, 
-                param_map[sens_param],
+                param_path,
                 (range_min/100, range_max/100)
             )
             
-            # Create cleaner sensitivity plots
-            metrics = [
-                ('monthly_cost_usd', '💰 Monthly Cost', '$/month'),
-                ('monthly_energy_kwh', '⚡ Monthly Energy', 'kWh/month'),
-                ('projected_tn_effluent', '🌊 TN Effluent', 'mg/L'),
-                ('projected_tp_effluent', '🌊 TP Effluent', 'mg/L')
-            ]
+            # Define all possible metrics
+            all_metrics = {
+                'monthly_cost_usd': ('💰 Monthly Operating Cost', '$/month', 'LightGreen'),
+                'monthly_energy_kwh': ('⚡ Monthly Energy Consumption', 'kWh/month', 'LightBlue'),
+                'projected_tn_effluent': ('🌊 Total Nitrogen in Effluent', 'mg/L', 'LightCoral'),
+                'projected_tp_effluent': ('🌊 Total Phosphorus in Effluent', 'mg/L', 'LightSalmon')
+            }
             
-            for metric, title, unit in metrics:
-                fig = go.Figure()
-                
-                for system_name in sens_results['system'].unique():
-                    system_data = sens_results[sens_results['system'] == system_name]
-                    color_map = {
-                        "BioSolutions DO Infusion": "#667eea", 
-                        "Turbine Aeration": "#f093fb",
-                        "Fine Bubble Diffused Air": "#38ef7d"
-                    }
-                    color = color_map.get(system_name, "#000000")
+            # Only plot metrics that actually change with this parameter
+            st.markdown(f"### Results: How {sens_param} Affects Performance")
+            
+            for metric in relevant_metrics:
+                if metric in all_metrics:
+                    title, unit, area_color = all_metrics[metric]
                     
-                    fig.add_trace(go.Scatter(
-                        x=system_data['parameter_value'], 
-                        y=system_data[metric],
-                        name=system_name,
-                        line=dict(color=color, width=3),
-                        mode='lines+markers',
-                        marker=dict(size=6)
-                    ))
-                
-                fig.update_layout(
-                    title=f"{title} vs {sens_param}",
-                    xaxis_title=sens_param,
-                    yaxis_title=unit,
-                    height=400,
-                    hovermode='x unified',
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    fig = go.Figure()
+                    
+                    # Get min/max for setting reference lines
+                    all_values = []
+                    
+                    for system_name in sens_results['system'].unique():
+                        system_data = sens_results[sens_results['system'] == system_name]
+                        all_values.extend(system_data[metric].tolist())
+                        
+                        color_map = {
+                            "BioSolutions DO Infusion": "#667eea", 
+                            "Turbine Aeration": "#f093fb",
+                            "Fine Bubble Diffused Air": "#38ef7d"
+                        }
+                        color = color_map.get(system_name, "#000000")
+                        
+                        # Add area fill for better visibility
+                        fig.add_trace(go.Scatter(
+                            x=system_data['parameter_value'], 
+                            y=system_data[metric],
+                            name=system_name,
+                            line=dict(color=color, width=4),
+                            mode='lines',
+                            fill='tonexty' if system_name != "BioSolutions DO Infusion" else None,
+                            fillcolor=color + '20' if system_name != "BioSolutions DO Infusion" else None
+                        ))
+                    
+                    # Add current value marker
+                    param_keys = param_path.split('.')
+                    current_value = facility_data
+                    for key in param_keys:
+                        current_value = current_value[key]
+                    
+                    fig.add_vline(
+                        x=current_value, 
+                        line_dash="dash", 
+                        line_color="red",
+                        annotation_text="Current",
+                        annotation_position="top"
+                    )
+                    
+                    fig.update_layout(
+                        title=f"<b>{title}</b>",
+                        xaxis_title=f"{sens_param} {'($/kWh)' if 'Cost' in sens_param else ''}",
+                        yaxis_title=unit,
+                        height=450,
+                        hovermode='x unified',
+                        legend=dict(
+                            orientation="h", 
+                            yanchor="bottom", 
+                            y=1.02, 
+                            xanchor="right", 
+                            x=1
+                        ),
+                        plot_bgcolor='rgba(240,240,240,0.5)',
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Add interpretation help
+                    min_val, max_val = min(all_values), max(all_values)
+                    change_pct = ((max_val - min_val) / min_val) * 100
+                    
+                    if change_pct > 5:  # Only show if there's meaningful change
+                        st.markdown(f"""
+                        <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 4px solid #667eea;">
+                            <strong>💡 What this means:</strong> 
+                            If {sens_param.lower()} varies from {range_min}% to {range_max}% of current, 
+                            this metric changes by up to <strong>{abs(change_pct):.1f}%</strong>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.success(f"✅ This metric is stable - not significantly affected by {sens_param}")
+            
+            # Show comparison table at current conditions
+            st.markdown("### 📊 Quick Comparison at Current Conditions")
+            
+            current_comparison = sens_results[
+                (sens_results['multiplier'] >= 0.99) & 
+                (sens_results['multiplier'] <= 1.01)
+            ][['system', 'monthly_cost_usd', 'monthly_energy_kwh', 
+               'projected_tn_effluent', 'projected_tp_effluent']]
+            
+            if not current_comparison.empty:
+                current_comparison.columns = ['System', 'Monthly Cost ($)', 'Energy (kWh/mo)', 
+                                             'TN (mg/L)', 'TP (mg/L)']
+                st.dataframe(
+                    current_comparison.style.format({
+                        'Monthly Cost ($)': '${:,.2f}',
+                        'Energy (kWh/mo)': '{:,.0f}',
+                        'TN (mg/L)': '{:.2f}',
+                        'TP (mg/L)': '{:.2f}'
+                    }),
+                    use_container_width=True,
+                    hide_index=True
                 )
-                
-                st.plotly_chart(fig, use_container_width=True)
     
     # Summary table
     st.markdown("## 📋 Summary Table")
