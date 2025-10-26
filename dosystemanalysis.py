@@ -350,13 +350,14 @@ def main():
         st.markdown("### 💧")
     with col2:
         st.title("Wastewater Aeration System Comparison Tool")
-        st.markdown("**Powered by BioSolutions** | Compare aeration systems and optimize your facility")
+        st.markdown("**Advanced Analysis & Decision Support** | Compare technologies and optimize facility performance")
     
     st.markdown("---")
     
     # Sidebar for inputs
     with st.sidebar:
-        st.image("https://via.placeholder.com/200x80/667eea/ffffff?text=BioSolutions", use_container_width=True)
+        st.markdown("### 💧 BioSolutions")
+        st.markdown("---")
         st.markdown("## 📊 Facility Input Parameters")
         
         with st.expander("🏭 Basic Information", expanded=True):
@@ -923,18 +924,20 @@ def main():
     
     # Export section
     st.markdown("## 📥 Export Results")
+    st.markdown("Download your analysis in different formats")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        # Generate text report
+        # Generate comprehensive text report
         report_text = generate_pdf_report(facility_data, selected_systems, comparison_df)
         st.download_button(
-            label="📄 Download Text Report",
+            label="📄 Download Full Report (TXT)",
             data=report_text,
-            file_name=f"aeration_comparison_{datetime.now().strftime('%Y%m%d')}.txt",
+            file_name=f"aeration_comparison_report_{datetime.now().strftime('%Y%m%d')}.txt",
             mime="text/plain",
-            use_container_width=True
+            use_container_width=True,
+            help="Comprehensive text report with all analysis results"
         )
     
     with col2:
@@ -945,7 +948,32 @@ def main():
             data=csv,
             file_name=f"aeration_data_{datetime.now().strftime('%Y%m%d')}.csv",
             mime="text/csv",
-            use_container_width=True
+            use_container_width=True,
+            help="Raw data for Excel or other analysis tools"
+        )
+    
+    with col3:
+        # Enhanced summary export
+        summary_text = f"""QUICK SUMMARY - {datetime.now().strftime('%Y-%m-%d')}
+
+Facility: {facility_data['basic_info']['flow_rate_mgd']} MGD, {facility_data['basic_info']['population_served']} people
+
+SYSTEMS COMPARED:
+"""
+        for name, perf, _ in selected_systems:
+            summary_text += f"\n{name}:"
+            summary_text += f"\n  Monthly Cost: ${perf['monthly_cost_usd']:,.2f}"
+            summary_text += f"\n  Energy: {perf['monthly_energy_kwh']:,.0f} kWh/month"
+            summary_text += f"\n  TN: {perf['projected_tn_effluent']:.1f} mg/L"
+            summary_text += f"\n  TP: {perf['projected_tp_effluent']:.1f} mg/L\n"
+        
+        st.download_button(
+            label="📋 Download Summary",
+            data=summary_text,
+            file_name=f"quick_summary_{datetime.now().strftime('%Y%m%d')}.txt",
+            mime="text/plain",
+            use_container_width=True,
+            help="Quick summary of key metrics"
         )
     
     # Footer
@@ -957,8 +985,7 @@ def main():
                 Data based on Greenleaf WWTP case study
             </p>
             <p style='margin: 5px 0;'>
-                📧 <a href='mailto:info@biosolutions.com' style='color: #667eea;'>info@biosolutions.com</a> | 
-                🌐 <a href='https://biosolutions.com' style='color: #667eea;'>www.biosolutions.com</a>
+                🌐 <a href='https://www.biosolutions-usa.com/' target='_blank' style='color: #667eea;'>www.biosolutions-usa.com</a>
             </p>
             <p style='margin: 15px 0 5px 0; font-size: 12px; color: #999;'>
                 © 2025 BioSolutions. All rights reserved. | Version 1.0
