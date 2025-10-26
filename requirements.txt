@@ -5,6 +5,7 @@ numpy>=1.26.0
 
 # Visualization
 plotly>=5.24.0
+matplotlib>=3.9.0
 
 # Optional: For enhanced data analysis
 scipy>=1.13.0
