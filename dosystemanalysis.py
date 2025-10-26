@@ -812,6 +812,14 @@ def main():
                         }
                         color = color_map.get(system_name, "#000000")
                         
+                        # Convert hex to rgba for transparency
+                        def hex_to_rgba(hex_color, opacity=0.2):
+                            hex_color = hex_color.lstrip('#')
+                            r = int(hex_color[0:2], 16)
+                            g = int(hex_color[2:4], 16)
+                            b = int(hex_color[4:6], 16)
+                            return f'rgba({r},{g},{b},{opacity})'
+                        
                         # Add area fill for better visibility
                         fig.add_trace(go.Scatter(
                             x=system_data['parameter_value'], 
@@ -820,7 +828,7 @@ def main():
                             line=dict(color=color, width=4),
                             mode='lines',
                             fill='tonexty' if system_name != "BioSolutions DO Infusion" else None,
-                            fillcolor=color + '20' if system_name != "BioSolutions DO Infusion" else None
+                            fillcolor=hex_to_rgba(color, 0.2) if system_name != "BioSolutions DO Infusion" else None
                         ))
                     
                     # Add current value marker
