@@ -692,8 +692,19 @@ def main():
     
     # Enhanced visualizations
     st.markdown("""
-        <div style="border: 3px solid #2d3748; border-radius: 15px; padding: 30px; margin: 25px 0; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <style>
+        .performance-section {
+            border: 3px solid #2d3748 !important;
+            border-radius: 15px !important;
+            padding: 30px !important;
+            margin: 25px 0 !important;
+            background-color: white !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+        }
+        </style>
+        <div class="performance-section">
     """, unsafe_allow_html=True)
+    
     st.markdown("## 📊 Performance Comparison")
     
     # Create comparison dataframe
@@ -927,8 +938,19 @@ def main():
     
     # Sensitivity Analysis
     st.markdown("""
-        <div style="border: 3px solid #2d3748; border-radius: 15px; padding: 30px; margin: 25px 0; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <style>
+        .sensitivity-section {
+            border: 3px solid #2d3748 !important;
+            border-radius: 15px !important;
+            padding: 30px !important;
+            margin: 25px 0 !important;
+            background-color: white !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+        }
+        </style>
+        <div class="sensitivity-section">
     """, unsafe_allow_html=True)
+    
     st.markdown("## 🔬 Sensitivity Analysis")
     st.markdown("See how system performance changes with different operating conditions")
     
@@ -1121,8 +1143,19 @@ def main():
     
     # Summary table
     st.markdown("""
-        <div style="border: 3px solid #2d3748; border-radius: 15px; padding: 30px; margin: 25px 0; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <style>
+        .summary-section {
+            border: 3px solid #2d3748 !important;
+            border-radius: 15px !important;
+            padding: 30px !important;
+            margin: 25px 0 !important;
+            background-color: white !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+        }
+        </style>
+        <div class="summary-section">
     """, unsafe_allow_html=True)
+    
     st.markdown("## 📋 Summary Table")
     
     summary_display = comparison_df.copy()
@@ -1141,12 +1174,24 @@ def main():
         use_container_width=True,
         height=200
     )
-    st.markdown('</div>', unsafe_allow_html=True)  # Close Summary Table container
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Export section
     st.markdown("""
-        <div style="border: 3px solid #2d3748; border-radius: 15px; padding: 30px; margin: 25px 0; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <style>
+        .export-section {
+            border: 3px solid #2d3748 !important;
+            border-radius: 15px !important;
+            padding: 30px !important;
+            margin: 25px 0 !important;
+            background-color: white !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+        }
+        </style>
+        <div class="export-section">
     """, unsafe_allow_html=True)
+    
     st.markdown("## 📥 Export Results")
     st.markdown("Download your analysis in different formats")
     
